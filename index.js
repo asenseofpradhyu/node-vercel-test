@@ -2,9 +2,9 @@ const express = require('express');
 const app = express();
 require('dotenv').config({path: __dirname + '/.env'})
 const product = require('./api/product');
+const axios = require('axios');
 
 // Telegram Lib
-const { Telegraf } = require('telegraf');
 const TelegramBot = require('node-telegram-bot-api');
 
 
@@ -13,37 +13,41 @@ app.use(express.json({extend:false}));
 app.use("/api/product", product);
 const PORT = process.env.PORT || 8080;
 
-// Telegraf Lib Demo
-// const bot = new Telegraf(process.env['BOT_TOKEN'])
-// bot.hears('hi', (ctx) => ctx.reply('Hey there'))
-// bot.launch()
 
-// replace the value below with the Telegram token you receive from @BotFather
+
 const token = process.env['BOT_TOKEN'];
 
-// Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});
-
-// Matches "/echo [whatever]"
-bot.onText(/\/echo (.+)/, (msg, match) => {
-  // 'msg' is the received Message from Telegram
-  // 'match' is the result of executing the regexp above on the text content
-  // of the message
-
-  const chatId = msg.chat.id;
-  const resp = match[1]; // the captured "whatever"
-
-  // send back the matched "whatever" to the chat
-  bot.sendMessage(chatId, resp);
-});
+bot.sendMessage(1387941176, "Send");
 
 // Listen for any kind of message. There are different kinds of
 // messages.
-bot.on('message', (msg) => {
+bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
 
-  // send a message to the chat acknowledging receipt of their message
-  bot.sendMessage(chatId, 'Received your message');
+  console.log(msg);
+
+
+  axios.get('https://api.wazirx.com/api/v2/tickers')
+  .then(function (response) {
+
+    // console.log(response.data['btcinr'].last);
+
+    if(msg.text == 'dogeinr'){
+      let CryptoData = `<b>Doge Todays Price</b> \n <b>Current Price:- </b>${response.data['dogeinr'].last}₹ \n <b>High Price:- </b>${response.data['dogeinr'].high}₹ \n <b>Low Price:- </b>${response.data['dogeinr'].low}₹ \n`;
+
+      bot.sendMessage(chatId, CryptoData, {parse_mode : "HTML"});
+    }
+   
+  })
+  .catch(function (error) {
+    // handle error
+    console.log(error);
+  })
+  .then(function () {
+    // always executed
+  });
+  
 });
 
 
